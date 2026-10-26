@@ -1,0 +1,22 @@
+[project]
+name = "day-support-agent"
+version = "0.1.0"
+description = "スケジュール管理とやりたいことをサポートする日常生活エージェント"
+requires-python = ">=3.10"
+dependencies = ["anthropic>=0.40"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+day-agent = "day_agent.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
