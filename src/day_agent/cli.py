@@ -12,7 +12,16 @@ def main() -> None:
                     help="朝のブリーフィングを表示して終了(cron等で使える)")
     ap.add_argument("--plain", action="store_true",
                     help="--brief をAIを使わず素材のまま表示する(APIキー不要)")
+    ap.add_argument("--seed-habits", action="store_true",
+                    help="運動・小説の執筆・ピアノの練習・英語を初期目標つきで登録")
+    ap.add_argument("--habits", action="store_true", help="今週の習慣の進捗を表示")
+    ap.add_argument("--sync", metavar="FILE",
+                    help="JSON/CSVから習慣の実績を取り込む(列: id,date,habit,amount)")
     args = ap.parse_args()
+
+    if args.seed_habits or args.habits or args.sync:
+        _habit_commands(args)
+        return
 
     calendar = None
     if args.google:
@@ -39,3 +48,30 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+SEED = [("運動", "min", 150, ["exercise", "workout"]),
+        ("小説の執筆", "min", 150, ["執筆", "writing"]),
+        ("ピアノの練習", "min", 120, ["ピアノ", "piano"]),
+        ("英語", "min", 150, ["english"])]
+
+
+def _habit_commands(args) -> None:
+    from datetime import date
+
+    from .brief import _fmt_habit
+    from .habits import HabitTracker
+    from .store import Store
+    from .sync import FileSource, sync
+
+    ht = HabitTracker(Store())
+    if args.seed_habits:
+        for name, unit, target, aliases in SEED:
+            if not ht.find(name):
+                ht.create(name, unit, target, aliases)
+        print("登録しました。目標は仮置きです。チャットで「運動の週目標を200分に」などと変更できます。")
+    if args.sync:
+        print(sync(ht, FileSource(args.sync)))
+    if args.habits or args.seed_habits or args.sync:
+        for p in ht.all_progress(date.today()):
+            print(_fmt_habit(p))

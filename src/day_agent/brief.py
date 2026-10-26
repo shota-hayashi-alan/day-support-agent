@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from .habits import HabitTracker
 from .store import DATE_FMT, Store
 from .tools import WEEKDAYS
 
@@ -15,6 +16,7 @@ BRIEF_PROMPT = """以下は、ユーザーの今日の予定・空き時間・�
 2. 今日の予定
 3. おすすめの1日の過ごし方(空き時間にやりたいことを具体的に割り当てる。無理は禁物)
 4. 期限が近いもの・気になる点
+5. 習慣の週目標に対して遅れているものがあれば、空き時間に具体的に組み込む
 予定を勝手に追加・変更しないこと。データにない情報は作らないこと。
 
 {context}"""
@@ -60,6 +62,15 @@ def _fmt_wish(w: dict, today: date) -> str:
     return " / ".join(parts)
 
 
+def _fmt_habit(p: dict) -> str:
+    u = "分" if p["unit"] == "min" else "回"
+    goal = f"{p['this_week']:g}/{p['weekly_target']:g}{u}" if p["weekly_target"] \
+        else f"{p['this_week']:g}{u}"
+    status = "達成!" if p["achieved"] else (
+        f"残り{p['remaining']:g}{u}・今日含め{p['days_left_this_week'] + 1}日" if p["weekly_target"] else "")
+    return f"- {p['habit']}: {goal} {status} 連続{p['streak_days']}日".replace("  ", " ")
+
+
 def build_context(store: Store, calendar, today: date) -> str:
     """AIに渡す(または --plain でそのまま表示する)素材テキスト。"""
     d = today.strftime(DATE_FMT)
@@ -73,6 +84,10 @@ def build_context(store: Store, calendar, today: date) -> str:
     lines += [f"- {_fmt_event(e)}" for e in calendar.list_events(tomorrow)] or ["- なし"]
     lines += ["", "■ やりたいこと(未完了、期限・優先度順)"]
     lines += [f"- {_fmt_wish(w, today)}" for w in store.list_wishes()] or ["- なし"]
+    habits = HabitTracker(store).all_progress(today)
+    if habits:
+        lines += ["", "■ 習慣の今週の進捗"]
+        lines += [_fmt_habit(p) for p in habits]
     return "\n".join(lines)
 
 

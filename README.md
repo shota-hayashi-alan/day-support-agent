@@ -18,6 +18,21 @@ day-agent
 ```
 データは `data/store.json`（`DAY_AGENT_DATA` で変更可）に保存されます。
 
+## 習慣トラッカー
+運動・小説の執筆・ピアノの練習・英語など、週ごとの目標に対する進捗と連続日数を管理します。
+```bash
+day-agent --seed-habits        # 上記4つを仮の週目標つきで登録（運動150分、執筆150分、ピアノ120分、英語150分）
+day-agent --habits             # 今週の進捗を表示
+day-agent --sync records.csv   # 外部データを取り込み（JSON/CSV: id,date,habit,amount）
+```
+チャットでも「ピアノを30分やった」「運動の週目標を200分に」で記録・変更できます。進捗は朝のブリーフィングにも出ます。
+週は月曜始まりで、連続日数は「今日まだ未実施」でも昨日までの連続を途切れさせません。
+
+### 外部アプリとの自動連携
+`sync.py` の `Source` を実装すれば、データ源を追加できます（`(source, id)` が同じ記録は二重登録されません）。
+現在は `FileSource`（JSON/CSV）のみ。スマホのショートカットやIFTTT、各アプリのエクスポートからの取り込み口として使えます。
+**Fitbitについて:** 旧Fitbit Web APIは2026年秋に終了予定で、後継はGoogle Health APIです。仕様を確認のうえ、別PRでSourceとして追加する想定です。
+
 ## 朝のブリーフィング
 ```bash
 day-agent --brief          # 今日の予定・空き時間・やりたいことをAIが1日の計画にまとめる
@@ -42,8 +57,10 @@ day-agent --google
 - `src/day_agent/store.py` JSON保存
 - `src/day_agent/tools.py` Claude用ツール定義
 - `src/day_agent/agent.py` ツール呼び出しループ
+- `src/day_agent/habits.py` 習慣の目標・記録・進捗
+- `src/day_agent/sync.py` 外部データ取り込み
 - `src/day_agent/gcal.py` Googleカレンダー連携
 - `src/day_agent/cli.py` 対話CLI
 
 ## 今後の候補
-習慣トラッカー、LINE/Slack連携
+LINE/Slack連携
