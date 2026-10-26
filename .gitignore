@@ -4,3 +4,8 @@ __pycache__/
 .env
 data/
 .pytest_cache/
+
+# OAuthの秘密情報(絶対にコミットしない)
+credentials.json
+client_secret*.json
+token.json
