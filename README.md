@@ -31,6 +31,15 @@ day-agent --sync records.csv   # 外部データを取り込み（JSON/CSV: id,d
 ### 外部アプリとの自動連携
 `sync.py` の `Source` を実装すれば、データ源を追加できます（`(source, id)` が同じ記録は二重登録されません）。
 現在は `FileSource`（JSON/CSV）のみ。スマホのショートカットやIFTTT、各アプリのエクスポートからの取り込み口として使えます。
+**Google Health API(Fitbitの後継)連携 — 作業中:**
+`healthapi.py` で認証と運動データの取得(`users/me/dataTypes/exercise/dataPoints`、読み取り専用スコープのみ)までを実装済みです。
+運動1件のJSONの項目が確定していないため、習慣への自動記録はまだです。次のコマンドで生データを確認できます（初回はブラウザで認可）。
+```bash
+pip install -e ".[google]"
+day-agent --health-dump 14   # 直近14日の運動の生データをJSON表示
+```
+`credentials.json` は Cloud Console のデスクトップアプリ用OAuthクライアントです（Gitには含めない）。
+
 **Fitbitについて:** 旧Fitbit Web APIは2026年秋に終了予定で、後継はGoogle Health APIです。仕様を確認のうえ、別PRでSourceとして追加する想定です。
 
 ## 朝のブリーフィング

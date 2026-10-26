@@ -17,7 +17,13 @@ def main() -> None:
     ap.add_argument("--habits", action="store_true", help="今週の習慣の進捗を表示")
     ap.add_argument("--sync", metavar="FILE",
                     help="JSON/CSVから習慣の実績を取り込む(列: id,date,habit,amount)")
+    ap.add_argument("--health-dump", type=int, metavar="DAYS",
+                    help="Google Healthから直近DAYS日の運動の生データをJSON表示(仕様確認用)")
     args = ap.parse_args()
+
+    if args.health_dump:
+        _health_dump(args.health_dump)
+        return
 
     if args.seed_habits or args.habits or args.sync:
         _habit_commands(args)
@@ -72,6 +78,19 @@ def _habit_commands(args) -> None:
     if args.habits or args.seed_habits or args.sync:
         for p in ht.all_progress(date.today()):
             print(_fmt_habit(p))
+
+
+def _health_dump(days: int) -> None:
+    import json
+    from datetime import date, timedelta
+
+    from .healthapi import HealthClient, authorized_session
+
+    today = date.today()
+    points = HealthClient(authorized_session()).list_exercises(
+        today - timedelta(days=days - 1), today)
+    print(json.dumps(points, ensure_ascii=False, indent=2))
+    print(f"# {len(points)}件", flush=True)
 
 
 if __name__ == "__main__":

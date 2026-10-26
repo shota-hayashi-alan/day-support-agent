@@ -6,7 +6,7 @@ requires-python = ">=3.10"
 dependencies = ["anthropic>=0.40"]
 
 [project.optional-dependencies]
-google = ["google-api-python-client", "google-auth-oauthlib"]
+google = ["google-api-python-client", "google-auth-oauthlib", "requests"]
 dev = ["pytest"]
 
 [project.scripts]
