@@ -37,11 +37,13 @@ day-agent --sync records.csv   # 外部データを取り込み（JSON/CSV: id,d
 pip install -e ".[google]"
 day-agent --seed-habits                          # 初回のみ(「運動」習慣を作る)
 day-agent --sync-google                          # 直近14日の運動を取り込み(初回はブラウザで認可)
-day-agent --sync-google 30 --exclude-type WALKING --min-minutes 15
+day-agent --sync-google 30 --min-minutes 15      # 30日分・15分以上
+day-agent --sync-google --rebuild                # 設定を変えたあと、期間内のGoogle由来の記録を入れ直す
 day-agent --health-dump 14                       # 生データをJSON表示(確認用)
 ```
 - 記録する時間は、実際に動いていた時間(`activeDuration`)の分数。日付は端末のUTCオフセットで現地日付に直します。
-- 既定では10分未満の運動は除外。ウォーキングなど、種類での除外も指定できます。
+- 既定では10分未満の運動と、ウォーキング(`WALKING`)は除外。`--exclude-type GOLF` のように種類を指定して変更でき、`--exclude-type none` で除外なしになります。
+- Fitbitの自動検出は運動の種類を取り違えることがあります（種類の名前は目安です）。
 - 同じ運動は二重登録されません。ただし、あとから記録側で内容が修正されても、取り込み済みの分は更新されません。
 - 毎朝の自動実行例: `30 7 * * * cd ~/day-support-agent && .venv/bin/day-agent --sync-google && .venv/bin/day-agent --brief --google`
 `credentials.json` は Cloud Console のデスクトップアプリ用OAuthクライアントです（Gitには含めない）。

@@ -78,6 +78,17 @@ class HabitTracker:
         self.store._save()
         return entry
 
+    def remove_source_logs(self, source: str, date_from: str, date_to: str) -> int:
+        """指定ソースの記録のうち、期間内(両端含む)のものだけを削除する。手入力は消さない。"""
+        logs = self.store.data["logs"]
+        keep = [l for l in logs
+                if not (l["source"] == source and date_from <= l["date"] <= date_to)]
+        removed = len(logs) - len(keep)
+        if removed:
+            self.store.data["logs"] = keep
+            self.store._save()
+        return removed
+
     def _daily(self, habit_id: int) -> dict[str, float]:
         out: dict[str, float] = {}
         for l in self.store.data["logs"]:

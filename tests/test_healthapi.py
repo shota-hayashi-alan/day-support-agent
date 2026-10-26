@@ -108,3 +108,25 @@ def test_end_to_end_sync_is_idempotent(tmp_path):
     assert sync(ht, src)["added"] == 2
     assert sync(ht, src) == {"added": 0, "duplicate": 2, "errors": []}
     assert ht.progress("運動", date(2026, 10, 25))["this_week"] == 99.1  # 日曜時点の週: 84.1 + 15
+
+
+def test_resolve_excludes():
+    from day_agent.healthapi import resolve_excludes
+    assert resolve_excludes(None) == {"WALKING"}
+    assert resolve_excludes(["none"]) == set()
+    assert resolve_excludes(["golf", "Yoga"]) == {"GOLF", "YOGA"}
+
+
+def test_rebuild_removes_only_google_logs_in_window(tmp_path):
+    ht = HabitTracker(Store(tmp_path / "s.json"))
+    ht.create("運動", "min", 150)
+    ht.log("運動", "2026-10-25", 30)                                  # 手入力
+    ht.log("運動", "2026-10-25", 15, "google_health", "b")            # 期間内
+    ht.log("運動", "2026-09-01", 20, "google_health", "old")          # 期間外
+    assert ht.remove_source_logs("google_health", "2026-10-13", "2026-10-26") == 1
+    srcs = sorted((l["source"], l["ext_id"]) for l in ht.store.data["logs"])
+    assert srcs == [("google_health", "old"), ("manual", None)]
+    # 除外設定つきで入れ直すと、散歩は戻らない
+    src = GoogleHealthSource(Client([SWIM, WALK]), exclude_types={"WALKING"},
+                             today=date(2026, 10, 26))
+    assert sync(ht, src)["added"] == 1

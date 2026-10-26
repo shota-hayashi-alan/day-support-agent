@@ -99,6 +99,18 @@ def exercise_record(point: dict) -> dict:
             "type": ex.get("exerciseType", "")}
 
 
+DEFAULT_EXCLUDED_TYPES = ("WALKING",)
+
+
+def resolve_excludes(values: list[str] | None) -> set[str]:
+    """--exclude-type の指定を解決する。未指定なら既定(ウォーキング除外)、'none' で除外なし。"""
+    if values is None:
+        return set(DEFAULT_EXCLUDED_TYPES)
+    if any(v.lower() == "none" for v in values):
+        return set()
+    return {v.upper() for v in values}
+
+
 class GoogleHealthSource:
     """直近 days 日の運動を、「運動」習慣の記録として供給する Source。"""
 

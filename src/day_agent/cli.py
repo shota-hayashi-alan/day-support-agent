@@ -22,7 +22,9 @@ def main() -> None:
     ap.add_argument("--sync-google", type=int, nargs="?", const=14, metavar="DAYS",
                     help="Google Health(Fitbit)の直近DAYS日(既定14)の運動を「運動」習慣に取り込む")
     ap.add_argument("--exclude-type", action="append", metavar="TYPE",
-                    help="--sync-google で除外する運動の種類(例: WALKING)。複数指定可")
+                    help="--sync-google で除外する運動の種類。複数指定可。未指定ならWALKINGを除外、'none'で除外なし")
+    ap.add_argument("--rebuild", action="store_true",
+                    help="--sync-google の期間内のGoogle由来の記録をいったん消して入れ直す(手入力は消さない)")
     ap.add_argument("--min-minutes", type=float, default=10,
                     help="--sync-google で取り込む最短の運動時間(分)。既定10")
     args = ap.parse_args()
@@ -82,10 +84,19 @@ def _habit_commands(args) -> None:
     if args.sync:
         print(sync(ht, FileSource(args.sync)))
     if args.sync_google:
-        from .healthapi import GoogleHealthSource, HealthClient, authorized_session
+        from datetime import timedelta
+
+        from .healthapi import (GoogleHealthSource, HealthClient, authorized_session,
+                                resolve_excludes)
         source = GoogleHealthSource(
             HealthClient(authorized_session()), days=args.sync_google,
-            exclude_types=set(args.exclude_type or []), min_minutes=args.min_minutes)
+            exclude_types=resolve_excludes(args.exclude_type),
+            min_minutes=args.min_minutes)
+        if args.rebuild:
+            start = source.today - timedelta(days=source.days - 1)
+            n = ht.remove_source_logs(source.name, start.isoformat(),
+                                      source.today.isoformat())
+            print(f"Google由来の記録を{n}件削除して入れ直します")
         print(sync(ht, source))
     if args.habits or args.seed_habits or args.sync or args.sync_google:
         for p in ht.all_progress(date.today()):
