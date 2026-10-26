@@ -18,6 +18,14 @@ day-agent
 ```
 データは `data/store.json`（`DAY_AGENT_DATA` で変更可）に保存されます。
 
+## 朝のブリーフィング
+```bash
+day-agent --brief          # 今日の予定・空き時間・やりたいことをAIが1日の計画にまとめる
+day-agent --brief --plain  # AIなしで素材をそのまま表示（APIキー不要）
+```
+非対話で終了するので、cronなどで毎朝実行できます（例: `30 7 * * * day-agent --brief --google`）。
+空き時間は 08:00〜22:00 のうち30分以上の隙間を計算します。
+
 ## Googleカレンダー連携
 予定をGoogleカレンダー（primary）と同期できます。やりたいことリストはローカル保存のままです。
 
@@ -38,4 +46,4 @@ day-agent --google
 - `src/day_agent/cli.py` 対話CLI
 
 ## 今後の候補
-毎朝の自動ブリーフィング、習慣トラッカー、LINE/Slack連携
+習慣トラッカー、LINE/Slack連携
