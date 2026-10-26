@@ -2,7 +2,7 @@
 name = "day-support-agent"
 version = "0.1.0"
 description = "スケジュール管理とやりたいことをサポートする日常生活エージェント"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dependencies = ["anthropic>=0.40"]
 
 [project.optional-dependencies]
