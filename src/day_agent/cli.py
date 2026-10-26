@@ -19,13 +19,19 @@ def main() -> None:
                     help="JSON/CSVから習慣の実績を取り込む(列: id,date,habit,amount)")
     ap.add_argument("--health-dump", type=int, metavar="DAYS",
                     help="Google Healthから直近DAYS日の運動の生データをJSON表示(仕様確認用)")
+    ap.add_argument("--sync-google", type=int, nargs="?", const=14, metavar="DAYS",
+                    help="Google Health(Fitbit)の直近DAYS日(既定14)の運動を「運動」習慣に取り込む")
+    ap.add_argument("--exclude-type", action="append", metavar="TYPE",
+                    help="--sync-google で除外する運動の種類(例: WALKING)。複数指定可")
+    ap.add_argument("--min-minutes", type=float, default=10,
+                    help="--sync-google で取り込む最短の運動時間(分)。既定10")
     args = ap.parse_args()
 
     if args.health_dump:
         _health_dump(args.health_dump)
         return
 
-    if args.seed_habits or args.habits or args.sync:
+    if args.seed_habits or args.habits or args.sync or args.sync_google:
         _habit_commands(args)
         return
 
@@ -75,7 +81,13 @@ def _habit_commands(args) -> None:
         print("登録しました。目標は仮置きです。チャットで「運動の週目標を200分に」などと変更できます。")
     if args.sync:
         print(sync(ht, FileSource(args.sync)))
-    if args.habits or args.seed_habits or args.sync:
+    if args.sync_google:
+        from .healthapi import GoogleHealthSource, HealthClient, authorized_session
+        source = GoogleHealthSource(
+            HealthClient(authorized_session()), days=args.sync_google,
+            exclude_types=set(args.exclude_type or []), min_minutes=args.min_minutes)
+        print(sync(ht, source))
+    if args.habits or args.seed_habits or args.sync or args.sync_google:
         for p in ht.all_progress(date.today()):
             print(_fmt_habit(p))
 

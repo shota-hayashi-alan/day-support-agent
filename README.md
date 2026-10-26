@@ -31,13 +31,19 @@ day-agent --sync records.csv   # 外部データを取り込み（JSON/CSV: id,d
 ### 外部アプリとの自動連携
 `sync.py` の `Source` を実装すれば、データ源を追加できます（`(source, id)` が同じ記録は二重登録されません）。
 現在は `FileSource`（JSON/CSV）のみ。スマホのショートカットやIFTTT、各アプリのエクスポートからの取り込み口として使えます。
-**Google Health API(Fitbitの後継)連携 — 作業中:**
-`healthapi.py` で認証と運動データの取得(`users/me/dataTypes/exercise/dataPoints`、読み取り専用スコープのみ)までを実装済みです。
-運動1件のJSONの項目が確定していないため、習慣への自動記録はまだです。次のコマンドで生データを確認できます（初回はブラウザで認可）。
+**Google Health API(Fitbitの後継)連携:**
+`healthapi.py` が `users/me/dataTypes/exercise/dataPoints`（読み取り専用スコープのみ）から運動を取得し、「運動」習慣に自動記録します。
 ```bash
 pip install -e ".[google]"
-day-agent --health-dump 14   # 直近14日の運動の生データをJSON表示
+day-agent --seed-habits                          # 初回のみ(「運動」習慣を作る)
+day-agent --sync-google                          # 直近14日の運動を取り込み(初回はブラウザで認可)
+day-agent --sync-google 30 --exclude-type WALKING --min-minutes 15
+day-agent --health-dump 14                       # 生データをJSON表示(確認用)
 ```
+- 記録する時間は、実際に動いていた時間(`activeDuration`)の分数。日付は端末のUTCオフセットで現地日付に直します。
+- 既定では10分未満の運動は除外。ウォーキングなど、種類での除外も指定できます。
+- 同じ運動は二重登録されません。ただし、あとから記録側で内容が修正されても、取り込み済みの分は更新されません。
+- 毎朝の自動実行例: `30 7 * * * cd ~/day-support-agent && .venv/bin/day-agent --sync-google && .venv/bin/day-agent --brief --google`
 `credentials.json` は Cloud Console のデスクトップアプリ用OAuthクライアントです（Gitには含めない）。
 
 **Fitbitについて:** 旧Fitbit Web APIは2026年秋に終了予定で、後継はGoogle Health APIです。仕様を確認のうえ、別PRでSourceとして追加する想定です。
