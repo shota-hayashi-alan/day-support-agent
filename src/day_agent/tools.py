@@ -23,7 +23,7 @@ TOOLS = [
          "required": ["date_from"]}},
     {"name": "delete_event",
      "description": "予定をIDで削除する。",
-     "input_schema": {"type": "object", "properties": {"event_id": {"type": "integer"}},
+     "input_schema": {"type": "object", "properties": {"event_id": {"type": ["integer", "string"]}},
                       "required": ["event_id"]}},
     {"name": "add_wish",
      "description": "「やりたいこと」リストに項目を追加する。",
@@ -49,23 +49,24 @@ TOOLS = [
 WEEKDAYS = "月火水木金土日"
 
 
-def run_tool(store: Store, name: str, args: dict) -> str:
+def run_tool(store: Store, name: str, args: dict, calendar=None) -> str:
     try:
-        return json.dumps(_dispatch(store, name, args), ensure_ascii=False)
+        return json.dumps(_dispatch(store, calendar or store, name, args),
+                          ensure_ascii=False)
     except Exception as e:  # ツール内エラーはモデルに返して自己修正させる
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
 
-def _dispatch(store: Store, name: str, a: dict):
+def _dispatch(store: Store, cal, name: str, a: dict):
     if name == "add_event":
-        conflicts = store.find_conflicts(a["date"], a["start"], a.get("end"))
-        ev = store.add_event(a["title"], a["date"], a["start"], a.get("end"),
+        conflicts = cal.find_conflicts(a["date"], a["start"], a.get("end"))
+        ev = cal.add_event(a["title"], a["date"], a["start"], a.get("end"),
                              a.get("note", ""))
         return {"added": ev, "conflicts": conflicts}
     if name == "list_events":
-        return store.list_events(a["date_from"], a.get("date_to"))
+        return cal.list_events(a["date_from"], a.get("date_to"))
     if name == "delete_event":
-        return {"deleted": store.delete_event(a["event_id"])}
+        return {"deleted": cal.delete_event(a["event_id"])}
     if name == "add_wish":
         return store.add_wish(a["title"], a.get("priority", "medium"),
                               a.get("est_minutes"), a.get("deadline"))
