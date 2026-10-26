@@ -46,9 +46,6 @@ def main() -> None:
             print(agent.chat(text))
 
 
-if __name__ == "__main__":
-    main()
-
 
 SEED = [("運動", "min", 150, ["exercise", "workout"]),
         ("小説の執筆", "min", 150, ["執筆", "writing"]),
@@ -75,3 +72,7 @@ def _habit_commands(args) -> None:
     if args.habits or args.seed_habits or args.sync:
         for p in ht.all_progress(date.today()):
             print(_fmt_habit(p))
+
+
+if __name__ == "__main__":
+    main()
