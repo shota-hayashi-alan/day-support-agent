@@ -19,8 +19,9 @@ SYSTEM_PROMPT = """あなたはユーザーの日常生活をサポートする�
 
 class Agent:
     def __init__(self, store: Store | None = None,
-                 client: anthropic.Anthropic | None = None):
+                 client: anthropic.Anthropic | None = None, calendar=None):
         self.store = store or Store()
+        self.calendar = calendar or self.store
         self.client = client or anthropic.Anthropic()
         self.messages: list[dict] = []
 
@@ -35,7 +36,7 @@ class Agent:
                 return "".join(b.text for b in resp.content if b.type == "text")
             results = [
                 {"type": "tool_result", "tool_use_id": b.id,
-                 "content": run_tool(self.store, b.name, b.input)}
+                 "content": run_tool(self.store, b.name, b.input, self.calendar)}
                 for b in resp.content if b.type == "tool_use"]
             self.messages.append({"role": "user", "content": results})
         return "(処理が長くなりすぎたため中断しました)"

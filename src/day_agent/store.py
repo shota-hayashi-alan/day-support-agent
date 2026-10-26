@@ -10,6 +10,14 @@ DATE_FMT = "%Y-%m-%d"
 TIME_FMT = "%H:%M"
 
 
+def overlapping(events: list[dict], start: str, end: str | None) -> list[dict]:
+    """同日の予定リストから、[start, end) と時間が重なるものを返す。"""
+    end = end or start
+    return [e for e in events
+            if (start < (e["end"] or e["start"]) and e["start"] < end)
+            or start == e["start"]]
+
+
 def default_path() -> Path:
     return Path(os.environ.get("DAY_AGENT_DATA", "data/store.json"))
 
@@ -61,10 +69,7 @@ class Store:
         return changed
 
     def find_conflicts(self, date: str, start: str, end: str | None) -> list[dict]:
-        end = end or start
-        return [e for e in self.list_events(date)
-                if start < (e["end"] or e["start"]) and e["start"] < end
-                or (start == e["start"])]
+        return overlapping(self.list_events(date), start, end)
 
     # --- やりたいこと ---
     def add_wish(self, title: str, priority: str = "medium",
