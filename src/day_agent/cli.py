@@ -21,6 +21,8 @@ def main() -> None:
                     help="Google Healthから直近DAYS日の運動の生データをJSON表示(仕様確認用)")
     ap.add_argument("--sync-google", type=int, nargs="?", const=14, metavar="DAYS",
                     help="Google Health(Fitbit)の直近DAYS日(既定14)の運動を「運動」習慣に取り込む")
+    ap.add_argument("--sync-calendar", type=int, nargs="?", const=14, metavar="DAYS",
+                    help="Googleカレンダーの「✅ピアノ 30分」形式の予定を、直近DAYS日(既定14)分、習慣の実績として取り込む")
     ap.add_argument("--exclude-type", action="append", metavar="TYPE",
                     help="--sync-google で除外する運動の種類。複数指定可。未指定ならWALKINGを除外、'none'で除外なし")
     ap.add_argument("--rebuild", action="store_true",
@@ -33,7 +35,7 @@ def main() -> None:
         _health_dump(args.health_dump)
         return
 
-    if args.seed_habits or args.habits or args.sync or args.sync_google:
+    if args.seed_habits or args.habits or args.sync or args.sync_google or args.sync_calendar:
         _habit_commands(args)
         return
 
@@ -98,7 +100,13 @@ def _habit_commands(args) -> None:
                                       source.today.isoformat())
             print(f"Google由来の記録を{n}件削除して入れ直します")
         print(sync(ht, source))
-    if args.habits or args.seed_habits or args.sync or args.sync_google:
+    if args.sync_calendar:
+        from .calsync import CalendarHabitSource
+        from .gcal import GoogleCalendar
+        print(sync(ht, CalendarHabitSource(GoogleCalendar.from_oauth(), ht,
+                                           days=args.sync_calendar)))
+    if args.habits or args.seed_habits or args.sync or args.sync_google \
+            or args.sync_calendar:
         for p in ht.all_progress(date.today()):
             print(_fmt_habit(p))
 
